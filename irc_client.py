@@ -1,9 +1,9 @@
 import socket
 
 def irc_client():
-    server = 'irc.example.com'
-    channel = '#example'
-    nickname = 'MyBot'
+    server = 'irc.dal.net'
+    channel = '#miCanal'
+    nickname = 'miUsuario'
 
     irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     irc.connect((server, 6667))
@@ -18,5 +18,5 @@ def irc_client():
         elif 'PRIVMSG' in message:
             print(message)
 
-if __name__ == '__main__':
+if name == 'main':
     irc_client()
