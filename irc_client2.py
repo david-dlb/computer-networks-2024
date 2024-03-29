@@ -2,8 +2,8 @@ import socket
 server = 'irc.dal.net'
 port = 6667
 channel = '#miCanal'
-nickname = 'miUsuario'
-realname = 'Mi Nombre Real'
+nickname = 'miUsuario2'
+realname = 'Mi Nombre Real2'
 
 
 
@@ -21,6 +21,9 @@ def irc_client():
         try:
             data = irc.recv(2048).decode('UTF-8')
             print(data)
+            sender = data.split('!', 1)[0][1:]
+
+            send_message('como ta mi hermano, ' + sender + '!')
 
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
