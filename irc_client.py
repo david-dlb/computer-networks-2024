@@ -1,49 +1,39 @@
 import socket
-server = 'irc.dal.net'
-port = 6667
-channel = '#miCanal'
-nickname = 'miUsuario'
-realname = 'Mi Nombre Real'
+import threading
 
+def send_message(message):
+    irc.send(bytes(message, 'UTF-8'))
 
-
-def irc_client():
-
-    irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    irc.connect((server, port))
-    irc.send(bytes('NICK ' + nickname + '\r\n', 'UTF-8'))
-    irc.send(bytes('USER ' + nickname + ' 0 * :' + realname + '\r\n', 'UTF-8'))
-    irc.send(bytes('JOIN ' + channel + '\r\n', 'UTF-8'))
-    def send_message(message):
-        irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
-
+def listen_for_messages():
     while True:
         try:
             data = irc.recv(2048).decode('UTF-8')
             print(data)
-
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
-
-            if data.find('PRIVMSG') != -1:
-                sender = data.split('!', 1)[0][1:]
-                message = data.split('PRIVMSG', 1)[1].split(':', 1)[1]
-
-                if message.strip() == '!hello':
-                    send_message('Hello, ' + sender + '!')
-
-            if data.find('JOIN') != -1:
-                joined_user = data.split('!')[0][1:]
-                send_message('Welcome, ' + joined_user + '!')
-
-            if data.find('QUIT') != -1:
-                quit_user = data.split('!')[0][1:]
-                send_message('Goodbye, ' + quit_user + '!')
         except OSError as e:
             print("Error:", e)
             break
 
-    irc.close()
+server = 'irc.dal.net'
+port = 6667
+channel = '#miCanal'
+nickname = 'miUsuario2'
+realname = 'Mi Nombre Real2'
 
-if __name__ == '__main__':
-    irc_client()
+irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+irc.connect((server, port))
+irc.send(bytes('NICK ' + nickname + '\r\n', 'UTF-8'))
+irc.send(bytes('USER ' + nickname + ' 0 * :' + realname + '\r\n', 'UTF-8'))
+irc.send(bytes('JOIN ' + channel + '\r\n', 'UTF-8'))
+
+# Iniciar un hilo para escuchar los mensajes del servidor
+thread = threading.Thread(target=listen_for_messages)
+thread.start()
+
+# Leer mensajes desde la consola y enviar al servidor
+while True:
+    message = input()
+    send_message(message)
+
+irc.close()
