@@ -4,6 +4,7 @@ import threading
 def send_message(message):
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
+
 def listen_for_messages():
     while True:
         try:
@@ -31,9 +32,29 @@ irc.send(bytes('JOIN ' + channel + '\r\n', 'UTF-8'))
 thread = threading.Thread(target=listen_for_messages)
 thread.start()
 
-# Leer mensajes desde la consola y enviar al servidor
+def whois_user(nickname):
+    irc.send(bytes('WHOIS ' + nickname + '\r\n', 'UTF-8'))
+
+def whowas_user(nickname):
+    irc.send(bytes('WHOWAS ' + nickname + '\r\n', 'UTF-8'))
+
+def who_channel(channel):
+    irc.send(bytes('WHO ' + channel + '\r\n', 'UTF-8'))
+
 while True:
     message = input()
+    if message.startswith("/whois "):
+        whois_user(message[7:])
+        continue
+    if message.startswith("/whowas "):
+        whowas_user(message[8:])
+        continue
+    if message.startswith("/who "):
+        print("ho")
+        who_channel(message[5:])
+        continue
+    if message.startswith("/exit"):
+        break
     send_message(message)
 
 irc.close()

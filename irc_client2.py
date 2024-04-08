@@ -4,12 +4,6 @@ import threading
 def send_message(message):
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
-def list_message(op):
-    if op == 'a':
-        irc.send(bytes('NICK ' + 'david' + '\r\n'), 'UTF-8')
-
-    if op == 'b':
-        irc.send(bytes('STATS' + '\r\n', 'UTF-8'))
 
 def listen_for_messages():
     while True:
@@ -25,7 +19,7 @@ def listen_for_messages():
 server = 'irc.dal.net'
 port = 6667
 channel = '#miCanal'
-nickname = 'miUsuario'
+nickname = 'miUsuario1'
 realname = 'Mi Nombre Real'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,10 +32,27 @@ irc.send(bytes('JOIN ' + channel + '\r\n', 'UTF-8'))
 thread = threading.Thread(target=listen_for_messages)
 thread.start()
 
-# Leer mensajes desde la consola y enviar al servidor
+def whois_user(nickname):
+    irc.send(bytes('WHOIS ' + nickname + '\\r\\n', 'UTF-8'))
+
+def whowas_user(nickname):
+    irc.send(bytes('WHOWAS ' + nickname + '\\r\\n', 'UTF-8'))
+
+def who_channel(channel):
+    irc.send(bytes('WHO ' + channel + '\\r\\n', 'UTF-8'))
+
 while True:
     message = input()
-    # send_message(message)
-    list_message(message)
+    if message.startswith("/whois "):
+        whois_user(message[7:])
+        continue
+    if message.startswith("/whowas "):
+        whowas_user(message[8:])
+        continue
+    if message.startswith("/who "):
+        print("ho")
+        who_channel(message[5:])
+        continue
+    send_message(message)
 
 irc.close()
