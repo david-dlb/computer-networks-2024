@@ -4,6 +4,14 @@ import threading
 def send_message(message):
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
+def quit_irc():
+    irc.send(bytes('QUIT\r\n', 'UTF-8'))
+    irc.close()
+    print("Desconectado del servidor IRC.")
+
+def invite_user(nickname, channel):
+    irc.send(bytes('INVITE ' + nickname + ' ' + channel + '\r\n', 'UTF-8'))
+
 def set_topic(new_topic):
     irc.send(bytes('TOPIC ' + channel + ' :' + new_topic + '\r\n', 'UTF-8'))
 
@@ -91,7 +99,7 @@ while True:
         continue
     if message.startswith("/part"):
         part_channel()
-        break
+        continue
     if message.startswith("/names"):
         list_names()
         continue
@@ -101,6 +109,17 @@ while True:
     if message.startswith("/topic "):
         set_topic(message[7:])
         continue
+    if message.startswith("/invite "):
+        # Asume que el comando tiene el formato "/invite nickname #channel"
+        parts = message[8:].split(' ')
+        if len(parts) == 2:
+            invite_user(parts[0], parts[1])
+        else:
+            print("Uso incorrecto del comando /invite. Debe ser /invite nickname #channel")
+        continue
+    if message.startswith("/quit"):
+        quit_irc()
+        break
     send_message(message)
 
 irc.close()
