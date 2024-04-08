@@ -4,6 +4,13 @@ import threading
 def send_message(message):
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
+def set_topic(new_topic):
+    irc.send(bytes('TOPIC ' + channel + ' :' + new_topic + '\r\n', 'UTF-8'))
+
+def send_action():
+    action = input("action: ")
+    irc.send(bytes('PRIVMSG ' + channel + ' :\x01ACTION ' + action + '\x01\r\n', 'UTF-8'))
+
 def listen_for_messages():
     while True:
         try:
@@ -87,6 +94,12 @@ while True:
         break
     if message.startswith("/names"):
         list_names()
+        continue
+    if message.startswith("/action "):
+        send_action(message[8:])
+        continue
+    if message.startswith("/topic "):
+        set_topic(message[7:])
         continue
     send_message(message)
 
