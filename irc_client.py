@@ -2,7 +2,7 @@ import socket
 import threading
 
 def send_message(message):
-    irc.send(bytes(message, 'UTF-8'))
+    irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
 def listen_for_messages():
     while True:
