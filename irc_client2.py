@@ -11,6 +11,8 @@ def listen_for_messages():
             print(data)
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
+            if data.startswith('ERROR'):
+                handle_error(data)
         except OSError as e:
             print("Error al escuchar mensajes:", e)
             break
@@ -42,6 +44,10 @@ def part_channel():
 
 def list_names():
     irc.send(bytes('NAMES ' + channel + '\r\n', 'UTF-8'))
+
+def handle_error(error_message):
+    print("Error recibido del servidor:", error_message)
+    # Aquí puedes implementar lógica adicional para manejar el error, como intentar reconectar o mostrar un mensaje al usuario.
 
 server = 'irc.dal.net'
 port = 6667
