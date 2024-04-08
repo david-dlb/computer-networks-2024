@@ -40,6 +40,9 @@ def part_channel():
     else:
         print("No hay un canal al que unirse.")
 
+def list_names():
+    irc.send(bytes('NAMES ' + channel + '\r\n', 'UTF-8'))
+
 server = 'irc.dal.net'
 port = 6667
 channel = '#miCanal'
@@ -76,6 +79,9 @@ while True:
     if message.startswith("/part"):
         part_channel()
         break
+    if message.startswith("/names"):
+        list_names()
+        continue
     send_message(message)
 
 irc.close()
