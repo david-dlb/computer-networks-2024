@@ -60,14 +60,35 @@ def part_channel():
 def list_names():
     irc.send(bytes('NAMES ' + channel + '\r\n', 'UTF-8'))
 
+def join_channel(channel_name):
+    # Asegúrate de que el nombre del canal no esté vacío
+    if channel_name:
+        irc.send(bytes('JOIN ' + channel_name + '\r\n', 'UTF-8'))
+        channel = channel_name
+    else:
+        print("El nombre del canal no puede estar vacío.")
+
+def create_channel(channel_name):
+    # Asegúrate de que el nombre del canal no esté vacío
+    if channel_name:
+        irc.send(bytes('CREATE ' + channel_name + '\r\n', 'UTF-8'))
+    else:
+        print("El nombre del canal no puede estar vacío.")
+
+def kick_user(nickname):
+    irc.send(bytes('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n', 'UTF-8'))
+
 def handle_error(error_message):
     print("Error recibido del servidor:", error_message)
     # Aquí puedes implementar lógica adicional para manejar el error, como intentar reconectar o mostrar un mensaje al usuario.
 
+print('Diga canal a unirse')
+canal = input()
+
 server = 'irc.dal.net'
 port = 6667
-channel = '#miCanal'
-nickname = 'miUsuario1'
+channel = canal
+nickname = 'miUsuario'
 realname = 'Mi Nombre Real'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,6 +129,19 @@ while True:
         continue
     if message.startswith("/topic "):
         set_topic(message[7:])
+        continue
+    if message.startswith("/joinChanel"):
+        chanel = message.split(" ")[1]
+        join_channel(chanel)
+        continue
+    if message.startswith("/createChanel"):
+        print('creando un canal')
+        chanel = message.split(" ")[1]
+        create_channel(chanel)
+        continue
+    if message.startswith("/kick"): # para eliminar a un usuario del canal
+        usertoKick = message.split(" ")[1]
+        kick_user(usertoKick)
         continue
     if message.startswith("/invite "):
         # Asume que el comando tiene el formato "/invite nickname #channel"

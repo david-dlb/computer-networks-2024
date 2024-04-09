@@ -16,11 +16,14 @@ def listen_for_messages():
             print("Error:", e)
             break
 
+print('Diga canal a unirse')
+canal = input()
+
 server = 'irc.dal.net'
 port = 6667
-channel = '#miCanal'
-nickname = 'miUsuario2'
-realname = 'Mi Nombre Real2'
+channel = canal
+nickname = 'miUsuario3'
+realname = 'MiNombreReal3'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((server, port))
@@ -53,7 +56,7 @@ while True:
         print("ho")
         who_channel(message[5:])
         continue
-    if message.startswith("/exit"):
+    if message.startswith("/quit"):
         break
     send_message(message)
 
