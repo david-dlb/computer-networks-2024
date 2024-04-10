@@ -1,11 +1,6 @@
 import socket
 import threading
 
-server = 'irc.dal.net'
-port = 6667
-channel = '#testChannel2'
-nickname = 'miUsuario2'
-realname = 'MiNombreReal2'
 
 def send_message(message):
     print(f'enviando mensaje en el canal {channel}')
@@ -16,15 +11,24 @@ def listen_for_messages():
     while True:
         try:
             data = irc.recv(2048).decode('UTF-8')
-            print(data)
+            print('data'+data)
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
             # Buscar mensajes de expulsión
-            if 'KICK' in data and nickname in data:
-                # print(f"Has sido expulsado del canal {channel}. Razón: {data.split(':', 1)[1]}")
-                print('---------------------------------')
-                print(f"Has sido expulsado del canal {channel}. Por alguna razon")
-                print('---------------------------------')
+            if 'KICK' in data:
+                # Dividir el mensaje por espacios para obtener los componentes
+                message_parts = data.split()
+                # El nombre del usuario expulsado estará en la posición 3 (índice 2)
+                kicked_user = message_parts[3]
+                # Extraer el canal del mensaje
+                channel_name = message_parts[2]
+                # Extraer la razón de la expulsión (si existe)
+                reason = ' '.join(message_parts[4:]) if len(message_parts) > 3 else "Razón no especificada"
+                # Verificar que este usuario es el que fue expulsado para mandarle el sms
+                print('usuarioeliminado_'+kicked_user+'_')
+                if nickname == kicked_user:
+                    print(f"Usuario {kicked_user} ha sido expulsado del canal {channel_name}. Razón: {reason}")
+                    join_channel('#miCanal')
         except OSError as e:
             print("Error:", e)
             break

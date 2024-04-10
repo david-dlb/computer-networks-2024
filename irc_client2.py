@@ -2,16 +2,42 @@ import socket
 import threading
 
 
+# -----------------------------------------------------------
+# Credencial y configuracion de cliente
+# ------------------------------------------------------------
 
+# print('Diga su nombre de usuario')
+# nickname = input()
+
+# print('Diga su nombre real')
+# realname = input()
+
+# print('Diga canal a unirse')
+# channel = input()
+
+server = 'irc.dal.net'
+port = 6667
+channel = "#miCanal"
+nickname = 'miUsuario1'
+realname = 'Mi Nombre Real1'
+
+
+# --------------------------------------------------
+# Funcionalidades del cliente
+# ----------------------------------------------------
+
+# Enviar el mensaje
 def send_message(message):
     print(f'enviando mensaje en el canal {channel}')
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
 
+# Salir del cliente
 def quit_irc():
     irc.send(bytes('QUIT\r\n', 'UTF-8'))
     irc.close()
     print("Desconectado del servidor IRC.")
 
+# 
 def userhost_query(nicknames):
     nicknames_str = ' '.join(nicknames)
     irc.send(bytes('USERHOST ' + nicknames_str + '\r\n', 'UTF-8'))
@@ -32,7 +58,10 @@ def listen_for_messages():
     while True:
         try:
             data = irc.recv(2048).decode('UTF-8')
-            print(data)
+            print('----------------------------')
+            print('data : '+data)
+            print('----------------------------')
+
             if data.startswith('302'):
                 print("Userhost information:", data.split()[2:])
             if data.startswith('353'):
@@ -43,10 +72,18 @@ def listen_for_messages():
                 handle_error(data)
             # Buscar mensajes de expulsión
             if 'KICK' in data and nickname in data:
-                # print(f"Has sido expulsado del canal {channel}. Razón: {data.split(':', 1)[1]}")
-                print('---------------------------------')
-                print(f"Has sido expulsado del canal {channel}. Por alguna razon")
-                print('---------------------------------')
+                # Dividir el mensaje por espacios para obtener los componentes
+                message_parts = data.split()
+                # El nombre del usuario expulsado estará en la posición 3 (índice 2)
+                kicked_user = message_parts[3]
+                # Extraer el canal del mensaje
+                channel_name = message_parts[2]
+                # Extraer la razón de la expulsión (si existe)
+                reason = ' '.join(message_parts[4:]) if len(message_parts) > 3 else "Razón no especificada"
+                print('usuarioeliminado_'+kicked_user+'_')
+                if nickname == kicked_user:
+                    print(f"Usuario {kicked_user} ha sido expulsado del canal {channel_name}. Razón: {reason}")
+                    join_channel('#miCanal')
         except OSError as e:
             print("Error al escuchar mensajes:", e)
             break
@@ -113,20 +150,7 @@ def kick_user(nickname):
 def handle_error(error_message):
     print("Error recibido del servidor:", error_message)
 
-# print('Diga su nombre de usuario')
-# nickname = input()
 
-# print('Diga su nombre real')
-# realname = input()
-
-# print('Diga canal a unirse')
-# channel = input()
-
-server = 'irc.dal.net'
-port = 6667
-channel = "#miCanal"
-nickname = 'miUsuario'
-realname = 'Mi Nombre Real'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((server, port))
