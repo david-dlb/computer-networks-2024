@@ -162,11 +162,6 @@ while True:
         part_channel()
         join_channel(chanel)
         continue
-    # if message.startswith("/createChanel"):
-    #     print('creando un canal')
-    #     chanel = message.split(" ")[1]
-    #     create_channel(chanel)
-    #     continue
     if message.startswith("/kick"): # para eliminar a un usuario del canal
         usertoKick = message.split(" ")[1]
         kick_user(usertoKick)
