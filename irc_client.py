@@ -30,6 +30,15 @@ def listen_for_messages():
             print("Error:", e)
             break
 
+print('Diga canal a unirse')
+canal = input()
+
+server = 'irc.dal.net'
+port = 6667
+channel = "#" + canal
+nickname = 'miUsuario3'
+realname = 'MiNombreReal3'
+
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((server, port))
 irc.send(bytes('NICK ' + nickname + '\r\n', 'UTF-8'))

@@ -12,12 +12,18 @@ def quit_irc():
     irc.close()
     print("Desconectado del servidor IRC.")
 
+def userhost_query(nicknames):
+    nicknames_str = ' '.join(nicknames)
+    irc.send(bytes('USERHOST ' + nicknames_str + '\r\n', 'UTF-8'))
+
 def invite_user(nickname, channel):
     irc.send(bytes('INVITE ' + nickname + ' ' + channel + '\r\n', 'UTF-8'))
 
 def set_topic(new_topic):
     irc.send(bytes('TOPIC ' + channel + ' :' + new_topic + '\r\n', 'UTF-8'))
 
+def wallops_message(message):
+    irc.send(bytes('WALLOPS :' + message + '\r\n', 'UTF-8'))
 def send_action():
     action = input("action: ")
     irc.send(bytes('PRIVMSG ' + channel + ' :\x01ACTION ' + action + '\x01\r\n', 'UTF-8'))
@@ -27,6 +33,10 @@ def listen_for_messages():
         try:
             data = irc.recv(2048).decode('UTF-8')
             print(data)
+            if data.startswith('302'):
+                print("Userhost information:", data.split()[2:])
+            if data.startswith('353'):
+                print("Usuarios en el canal: ", data.split()[3:])
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
             if data.startswith('ERROR'):
@@ -70,6 +80,9 @@ def part_channel():
 def list_names():
     irc.send(bytes('NAMES ' + channel + '\r\n', 'UTF-8'))
 
+def list_users(channel_name):
+    irc.send(bytes('NAMES ' + channel_name + '\r\n', 'UTF-8'))
+
 def join_channel(channel_name):
     global channel
     # Asegúrate de que el nombre del canal no esté vacío
@@ -100,7 +113,6 @@ def kick_user(nickname):
 
 def handle_error(error_message):
     print("Error recibido del servidor:", error_message)
-    # Aquí puedes implementar lógica adicional para manejar el error, como intentar reconectar o mostrar un mensaje al usuario.
 
 # print('Diga su nombre de usuario')
 # nickname = input()
@@ -113,9 +125,9 @@ def handle_error(error_message):
 
 server = 'irc.dal.net'
 port = 6667
-channel = '#miCanal'
-nickname = 'miUsuario1'
-realname = 'MiNombreReal1'
+channel = "#" + canal
+nickname = 'miUsuario'
+realname = 'Mi Nombre Real'
 
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((server, port))
@@ -130,6 +142,13 @@ thread.start()
 while True:
     print(f'Estas en el canal {channel}')
     message = input()
+    if message.startswith("/userhost "):
+        nicknames = message[10:].split()
+        userhost_query(nicknames)
+        continue
+    if message.startswith("/wallops "):
+        wallops_message(message[9:])
+        continue
     if message.startswith("/whois "):
         whois_user(message[7:])
         continue
@@ -150,6 +169,9 @@ while True:
         continue
     if message.startswith("/names"):
         list_names()
+        continue
+    if message.startswith("/users"):
+        list_users(channel)
         continue
     if message.startswith("/action "):
         send_action(message[8:])
