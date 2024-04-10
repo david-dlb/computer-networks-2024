@@ -21,7 +21,7 @@ canal = input()
 
 server = 'irc.dal.net'
 port = 6667
-channel = canal
+channel = "#" + canal
 nickname = 'miUsuario3'
 realname = 'MiNombreReal3'
 
