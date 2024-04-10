@@ -25,7 +25,6 @@ def listen_for_messages():
                 print('---------------------------------')
                 print(f"Has sido expulsado del canal {channel}. Por alguna razon")
                 print('---------------------------------')
-                join_channel('#miCanal')
         except OSError as e:
             print("Error:", e)
             break

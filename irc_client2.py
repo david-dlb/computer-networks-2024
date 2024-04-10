@@ -47,7 +47,6 @@ def listen_for_messages():
                 print('---------------------------------')
                 print(f"Has sido expulsado del canal {channel}. Por alguna razon")
                 print('---------------------------------')
-                join_channel('#miCanal')
         except OSError as e:
             print("Error al escuchar mensajes:", e)
             break
@@ -125,7 +124,7 @@ def handle_error(error_message):
 
 server = 'irc.dal.net'
 port = 6667
-channel = "#" + canal
+channel = "#miCanal"
 nickname = 'miUsuario'
 realname = 'Mi Nombre Real'
 
