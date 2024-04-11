@@ -17,8 +17,8 @@ import threading
 
 server = 'irc.dal.net'
 port = 6667
-channel = "#miCanal"
-nickname = 'miUsuario1'
+channel = "#miCanal133"
+nickname = 'miUsuario13'
 realname = 'Mi Nombre Real1'
 
 
@@ -57,7 +57,14 @@ def send_action():
 def listen_for_messages():
     while True:
         try:
-            data = irc.recv(2048).decode('UTF-8')
+            data = irc.recv(2048)
+            try:
+                # Intenta decodificar los datos como UTF-8
+                data = data.decode('UTF-8')
+            except UnicodeDecodeError:
+                # Si falla, intenta decodificar como ISO-8859-1
+                data = data.decode('ISO-8859-1')
+            print('----------------------------')
             print('----------------------------')
             print('data : '+data)
             print('----------------------------')
@@ -66,6 +73,14 @@ def listen_for_messages():
                 print("Userhost information:", data.split()[2:])
             if data.startswith('353'):
                 print("Usuarios en el canal: ", data.split()[3:])
+            # Manejar la respuesta al comando LIST
+            if data.startswith('321'):
+                print("Lista de canales:")
+            elif data.startswith('322'):
+                print(data.split()[3]) # Imprime el nombre del canal
+            elif data.startswith('323'):
+                print("Fin de la lista de canales.")
+
             if data.find('PING') != -1:
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
             if data.startswith('ERROR'):
@@ -116,8 +131,21 @@ def part_channel():
 def list_names():
     irc.send(bytes('NAMES ' + channel + '\r\n', 'UTF-8'))
 
+def list_channels():
+    irc.send(bytes('LIST\r\n', 'UTF-8'))
+
 def list_users(channel_name):
     irc.send(bytes('NAMES ' + channel_name + '\r\n', 'UTF-8'))
+
+def connect_to_server(server_name):
+    # Asegúrate de que el nombre del servidor no esté vacío
+    if server_name:
+        irc.send(bytes(f'SERVER {server_name}\r\n', 'UTF-8'))
+    else:
+        print("El nombre del servidor no puede estar vacío.")
+        
+def list_connected_servers():
+    irc.send(bytes('LINKS\r\n', 'UTF-8'))
 
 def join_channel(channel_name):
     global channel
@@ -146,6 +174,54 @@ def part_channel():
 
 def kick_user(nickname):
     irc.send(bytes('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n', 'UTF-8'))
+    send_message('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n')
+
+def ban_user(channel, nickname):
+    # Asegúrate de que el canal y el nickname no estén vacíos
+    if channel and nickname:
+        irc.send(bytes(f'MODE {channel} +b {nickname}\r\n', 'UTF-8'))
+    else:
+        print("El canal y el nickname no pueden estar vacíos.")
+
+def unban_user(channel, nickname):
+    # Asegúrate de que el canal y el nickname no estén vacíos
+    if channel and nickname:
+        irc.send(bytes(f'MODE {channel} -b {nickname}\r\n', 'UTF-8'))
+    else:
+        print("El canal y el nickname no pueden estar vacíos.")
+
+def set_channel_password(channel, password):
+    # Asegúrate de que el canal y la contraseña no estén vacíos
+    if channel and password:
+        irc.send(bytes(f'MODE {channel} +k {password}\r\n', 'UTF-8'))
+    else:
+        print("El canal y la contraseña no pueden estar vacíos.")
+
+def make_channel_invite_only(channel):
+    # Asegúrate de que el canal no esté vacío
+    if channel:
+        irc.send(bytes(f'MODE {channel} +i\r\n', 'UTF-8'))
+    else:
+        print("El nombre del canal no puede estar vacío.")
+
+def remove_channel_invite_only(channel):
+    # Asegúrate de que el canal no esté vacío
+    if channel:
+        irc.send(bytes(f'MODE {channel} -i\r\n', 'UTF-8'))
+    else:
+        print("El nombre del canal no puede estar vacío.")
+def remove_channel_password(channel):
+    # Asegúrate de que el canal no esté vacío
+    if channel:
+        irc.send(bytes(f'MODE {channel} -k\r\n', 'UTF-8'))
+    else:
+        print("El nombre del canal no puede estar vacío.")
+def change_user_permissions(channel, nickname, mode):
+    # Asegúrate de que el canal, el nickname y el modo no estén vacíos
+    if channel and nickname and mode:
+        irc.send(bytes(f'MODE {channel} {mode} {nickname}\r\n', 'UTF-8'))
+    else:
+        print("El canal, el nickname y el modo no pueden estar vacíos.")
 
 def handle_error(error_message):
     print("Error recibido del servidor:", error_message)
@@ -165,11 +241,67 @@ thread.start()
 while True:
     print(f'Estas en el canal {channel}')
     message = input()
-    if message.startswith("/userhost "):
+    if message.startswith("/server"):
+        # Asume que el comando tiene el formato "/server server_name"
+        server_name = message[8:]
+        connect_to_server(server_name)
+        continue
+    if message.startswith("/links"):
+        list_connected_servers()
+        continue
+    if message.startswith("/removeinviteonly"):
+        # Asume que el comando tiene el formato "/removeinviteonly #channel"
+        channel_name = message[17:]
+        remove_channel_invite_only(channel_name)
+        continue
+    if message.startswith("/inviteonly"):
+        # Asume que el comando tiene el formato "/inviteonly #channel"
+        channel_name = message[12:]
+        make_channel_invite_only(channel_name)
+        continue
+    if message.startswith("/password"):
+        # Asume que el comando tiene el formato "/password #channel contraseña"
+        parts = message[9:].split(' ', 1)
+        if len(parts) == 2:
+            channel_name, password = parts
+            set_channel_password(channel_name, password)
+        else:
+            print("Uso incorrecto del comando /password. Debe ser /password #channel contraseña")
+        continue
+    if message.startswith("/op"):
+        # Asume que el comando tiene el formato "/op nickname"
+        nickname = message[4:]
+        change_user_permissions(channel, nickname, '+o')
+        continue
+    if message.startswith("/deop"):
+        # Asume que el comando tiene el formato "/deop nickname"
+        nickname = message[6:]
+        change_user_permissions(channel, nickname, '-o')
+        continue
+    if message.startswith("/ban"):
+        # Asume que el comando tiene el formato "/ban nickname #channel"
+        parts = message[5:].split(' ')
+        if len(parts) == 2:
+            ban_user(parts[1], parts[0])
+        else:
+            print("Uso incorrecto del comando /ban. Debe ser /ban nickname #channel")
+        continue
+    if message.startswith("/unban"):
+        # Asume que el comando tiene el formato "/unban nickname #channel"
+        parts = message[7:].split(' ')
+        if len(parts) == 2:
+            unban_user(parts[1], parts[0])
+        else:
+            print("Uso incorrecto del comando /unban. Debe ser /unban nickname #channel")
+        continue
+    if message.startswith("/list"):
+        list_channels()
+        continue
+    if message.startswith("/userhost "): # el estado de conexión (indicado por el signo más +), el modo de usuario (indicado por el tilde ~), el nombre de usuario real (en este caso, "miUsuario"), y el hostname o dirección IP del usuario (e756-a214-b931-5050-47f1.206.152.ip).
         nicknames = message[10:].split()
         userhost_query(nicknames)
         continue
-    if message.startswith("/wallops "):
+    if message.startswith("/wallops "): # solo para operadores
         wallops_message(message[9:])
         continue
     if message.startswith("/whois "):
@@ -223,5 +355,5 @@ while True:
         quit_irc()
         break
     send_message(message)
-
+print("exit")
 irc.close()
