@@ -6,24 +6,24 @@ import threading
 # Credencial y configuracion de cliente
 # ------------------------------------------------------------
 
-# print('Diga su nombre de usuario')
-# nickname = input()
+print('Diga su nombre de usuario')
+nickname = input()
 
-# print('Diga su nombre real')
-# realname = input()
+print('Diga su nombre real')
+realname = input()
 
-# print('Diga canal a unirse')
-# channel = input()
+print('Diga canal a unirse')
+channel = input()
 
-# print('Ingrese la contraseña para el servidor IRC:')
-# password = input()
+print('Ingrese la contraseña para el servidor IRC:')
+password = input()
 
 server = 'irc.dal.net'
 port = 6667
-channel = "#miCanal2"
-nickname = 'miUsuario2'
-realname = 'Mi Nombre Real2'
-password = 'password2'
+# channel = "#miCanal2"
+# nickname = 'miUsuario2'
+# realname = 'Mi Nombre Real2'
+# password = 'password2'
 
 # --------------------------------------------------
 # Funcionalidades del cliente
