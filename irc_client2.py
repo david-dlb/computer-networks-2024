@@ -15,12 +15,15 @@ import threading
 # print('Diga canal a unirse')
 # channel = input()
 
+# print('Ingrese la contraseña para el servidor IRC:')
+# password = input()
+
 server = 'irc.dal.net'
 port = 6667
-channel = "#miCanal133"
-nickname = 'miUsuario13'
-realname = 'Mi Nombre Real1'
-
+channel = "#miCanal2"
+nickname = 'miUsuario2'
+realname = 'Mi Nombre Real2'
+password = 'password2'
 
 # --------------------------------------------------
 # Funcionalidades del cliente
@@ -228,11 +231,16 @@ def handle_error(error_message):
 
 
 
+# Crear el socket y conectar al servidor
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 irc.connect((server, port))
+
+# Enviar credenciales para iniciar sesion
+irc.send(bytes('PASS ' + password + '\r\n', 'UTF-8'))
 irc.send(bytes('NICK ' + nickname + '\r\n', 'UTF-8'))
 irc.send(bytes('USER ' + nickname + ' 0 * :' + realname + '\r\n', 'UTF-8'))
 irc.send(bytes('JOIN ' + channel + '\r\n', 'UTF-8'))
+
 
 # Iniciar un hilo para escuchar los mensajes del servidor
 thread = threading.Thread(target=listen_for_messages)
