@@ -6,33 +6,49 @@ import threading
 # Credencial y configuracion de cliente
 # ------------------------------------------------------------
 
-print('Diga su nombre de usuario')
-nickname = input()
+# server_ip = input("Ingrese la dirección IP del servidor: ")
+# port = int(input("Ingrese el puerto: "))
+# channel = input("Ingrese el nombre del canal a unirse")
+# nickname = input("Ingrese su apodo: ")
+# realname = input ("Ingrese 1 para usar conexión segura. Ingrese 2 para el caso contrario: ")
+# password = input("Ingrese su contraseña")
 
-print('Diga su nombre real')
-realname = input()
+# Solicitar al usuario que ingrese los 6 valores en una sola línea
+input_values = input("Ingrese los 6 valores separados por espacios: ")
 
-print('Diga canal a unirse')
-channel = input()
+# Dividir la cadena de entrada en una lista de valores
+values_list = input_values.split()
 
-print('Ingrese la contraseña para el servidor IRC:')
-password = input()
+# Ahora puedes acceder a cada valor por su índice en la lista
+server = values_list[0]
+portStr = int(values_list[1])
+channel = values_list[2]
+nickname = values_list[3]
+realname = values_list[4]
+password = values_list[5]
 
-server = 'irc.dal.net'
-port = 6667
-# channel = "#miCanal2"
-# nickname = 'miUsuario2'
-# realname = 'Mi Nombre Real2'
-# password = 'password2'
+# Asegurarse de que el puerto sea un entero
+port = int(portStr)
+
+print(f"Servidor: {server}")
+print(f"Puerto: {port}")
+print(f"Canal: {channel}")
+print(f"Apodo: {nickname}")
+print(f"Nombre real: {realname}")
+print(f"Contraseña: {password}")
 
 # --------------------------------------------------
 # Funcionalidades del cliente
 # ----------------------------------------------------
 
-# Enviar el mensaje
-def send_message(message):
-    print(f'enviando mensaje en el canal {channel}')
+# Enviar el mensaje a todos los usuarios del canal
+def send_channel_message(message):
     irc.send(bytes('PRIVMSG ' + channel + ' :' + message + '\r\n', 'UTF-8'))
+
+# Mandar un mensaje por privado a un usuario
+def send_private_message(nickname, message):
+    print(f'Enviando mensaje privado a {nickname}')
+    irc.send(bytes(f'PRIVMSG {nickname} :{message}\r\n', 'UTF-8'))
 
 # Salir del cliente
 def quit_irc():
@@ -40,7 +56,18 @@ def quit_irc():
     irc.close()
     print("Desconectado del servidor IRC.")
 
-# 
+# Enviar una noticia
+def send_notice(target, message):
+    """
+    Envía un mensaje de tipo NOTICE a un usuario o canal.
+
+    Parámetros:
+    - target: El apodo del usuario o el nombre del canal al que se enviará el mensaje.
+    - message: El mensaje a enviar.
+    """
+    irc.send(bytes('NOTICE ' + target + ' :' + message + '\r\n', 'UTF-8'))
+
+
 def userhost_query(nicknames):
     nicknames_str = ' '.join(nicknames)
     irc.send(bytes('USERHOST ' + nicknames_str + '\r\n', 'UTF-8'))
@@ -48,7 +75,10 @@ def userhost_query(nicknames):
 def invite_user(nickname, channel):
     irc.send(bytes('INVITE ' + nickname + ' ' + channel + '\r\n', 'UTF-8'))
 
-def set_topic(new_topic):
+def topic(channel):
+    irc.send(bytes('TOPIC ' + channel + '\r\n', 'UTF-8'))
+
+def set_topic(channel, new_topic):
     irc.send(bytes('TOPIC ' + channel + ' :' + new_topic + '\r\n', 'UTF-8'))
 
 def wallops_message(message):
@@ -67,10 +97,9 @@ def listen_for_messages():
             except UnicodeDecodeError:
                 # Si falla, intenta decodificar como ISO-8859-1
                 data = data.decode('ISO-8859-1')
-            print('----------------------------')
-            print('----------------------------')
-            print('data : '+data)
-            print('----------------------------')
+            print(' ')
+            print('data : '+ data)
+            print(' ')
 
             if data.startswith('302'):
                 print("Userhost information:", data.split()[2:])
@@ -88,6 +117,40 @@ def listen_for_messages():
                 irc.send(bytes('PONG ' + data.split()[1] + '\r\n', 'UTF-8'))
             if data.startswith('ERROR'):
                 handle_error(data)
+
+            # # Desglosar data para procesarla
+            # dataArr = data.split(' ')
+
+            # # Manejar cuando un usuario se une a un canal
+            # if 'JOIN' in dataArr:
+            #     userJoin = dataArr[0].split('!',1)[0]
+            #     if userJoin != 'rs:':
+            #         print(f'El usuario {userJoin} se ha unido al canal')
+
+            # # Manejar cuando un usuario se va del servidor
+            # if ':Quit:' in dataArr:
+            #     index_user = 0
+            #     for i in range(len(dataArr) - 1): # buscar data a quien es mandado el smsa  (a un usuario o un canal)
+            #         if dataArr[i] == ':Quit:':
+            #             index_user = i+1
+            #             break
+            #     print(f'El usuario {dataArr[index_user]} ha abandonado el servidor')
+
+            # # Manejar el recibir un mensaje
+            # if 'PRIVMSG' in dataArr:
+            #     words = dataArr
+            #     user_from = dataArr[0].split('!',1)[0] # seleccionar el usuario que mando el sms
+            #     index_msgTarget = 0
+            #     for i in range(len(dataArr) - 1): # buscar data a quien es mandado el smsa  (a un usuario o un canal)
+            #         if dataArr[i] == 'PRIVMSG':
+            #             index_msgTarget = i+1
+            #             break
+            #     msg = ' '.join(dataArr[(index_msgTarget+1):])
+            #     if dataArr[index_msgTarget].startswith('#'):
+            #         print(f'<{user_from}> send to channel {dataArr[index_msgTarget]} : {msg}')
+            #     elif dataArr[index_msgTarget] == nickname:
+            #         print(f'<{user_from}> send pv {dataArr[index_msgTarget]} : {msg}')
+
             # Buscar mensajes de expulsión
             if 'KICK' in data and nickname in data:
                 # Dividir el mensaje por espacios para obtener los componentes
@@ -107,13 +170,13 @@ def listen_for_messages():
             break
 
 def whois_user(nickname):
-    irc.send(bytes('WHOIS ' + nickname + '\\r\\n', 'UTF-8'))
+    irc.send(bytes('WHOIS ' + nickname + '\r\n', 'UTF-8'))
 
 def whowas_user(nickname):
-    irc.send(bytes('WHOWAS ' + nickname + '\\r\\n', 'UTF-8'))
+    irc.send(bytes('WHOWAS ' + nickname + '\r\n', 'UTF-8'))
 
 def who_channel(channel):
-    irc.send(bytes('WHO ' + channel + '\\r\\n', 'UTF-8'))
+    irc.send(bytes('WHO ' + channel + '\r\n', 'UTF-8'))
 
 def change_user():
     new_nickname = input("Ingrese el nuevo nombre de usuario: ")
@@ -177,7 +240,7 @@ def part_channel():
 
 def kick_user(nickname):
     irc.send(bytes('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n', 'UTF-8'))
-    send_message('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n')
+    send_channel_message('KICK ' + channel + ' ' + nickname + ' :You are kicked!\\r\\n')
 
 def ban_user(channel, nickname):
     # Asegúrate de que el canal y el nickname no estén vacíos
@@ -247,34 +310,36 @@ thread = threading.Thread(target=listen_for_messages)
 thread.start()
 
 while True:
-    print(f'Estas en el canal {channel}')
     message = input()
-    if message.startswith("/server"):
-        # Asume que el comando tiene el formato "/server server_name"
-        server_name = message[8:]
-        connect_to_server(server_name)
+    print('----------------------------')
+    if message.startswith("/msgpv"):
+        # Asume que el comando tiene el formato "/msgpv nickname msg"
+        msg = message[7:].split(' ', 1)
+        send_private_message(msg[0], msg[1])
         continue
-    if message.startswith("/links"):
-        list_connected_servers()
+    if message.startswith("/whois "):
+        whois_user(message[7:])
         continue
-    if message.startswith("/removeinviteonly"):
-        # Asume que el comando tiene el formato "/removeinviteonly #channel"
-        channel_name = message[17:]
-        remove_channel_invite_only(channel_name)
+    if message.startswith("/whowas "):
+        whowas_user(message[8:])
         continue
-    if message.startswith("/inviteonly"):
-        # Asume que el comando tiene el formato "/inviteonly #channel"
-        channel_name = message[12:]
-        make_channel_invite_only(channel_name)
+    if message.startswith("/list"):
+        list_channels()
         continue
-    if message.startswith("/password"):
-        # Asume que el comando tiene el formato "/password #channel contraseña"
-        parts = message[9:].split(' ', 1)
+    if message.startswith("/names"):
+        list_names()
+        continue
+    if message.startswith('/notice'):
+        msgarr = message.split(' ', 2)
+        send_notice(msgarr[1], msgarr[2])
+        continue
+    if message.startswith("/ban"):
+        # Asume que el comando tiene el formato "/ban nickname #channel"
+        parts = message[5:].split(' ')
         if len(parts) == 2:
-            channel_name, password = parts
-            set_channel_password(channel_name, password)
+            ban_user(parts[1], parts[0])
         else:
-            print("Uso incorrecto del comando /password. Debe ser /password #channel contraseña")
+            print("Uso incorrecto del comando /ban. Debe ser /ban nickname #channel")
         continue
     if message.startswith("/op"):
         # Asume que el comando tiene el formato "/op nickname"
@@ -286,61 +351,17 @@ while True:
         nickname = message[6:]
         change_user_permissions(channel, nickname, '-o')
         continue
-    if message.startswith("/ban"):
-        # Asume que el comando tiene el formato "/ban nickname #channel"
-        parts = message[5:].split(' ')
-        if len(parts) == 2:
-            ban_user(parts[1], parts[0])
-        else:
-            print("Uso incorrecto del comando /ban. Debe ser /ban nickname #channel")
-        continue
-    if message.startswith("/unban"):
-        # Asume que el comando tiene el formato "/unban nickname #channel"
-        parts = message[7:].split(' ')
-        if len(parts) == 2:
-            unban_user(parts[1], parts[0])
-        else:
-            print("Uso incorrecto del comando /unban. Debe ser /unban nickname #channel")
-        continue
-    if message.startswith("/list"):
-        list_channels()
-        continue
-    if message.startswith("/userhost "): # el estado de conexión (indicado por el signo más +), el modo de usuario (indicado por el tilde ~), el nombre de usuario real (en este caso, "miUsuario"), y el hostname o dirección IP del usuario (e756-a214-b931-5050-47f1.206.152.ip).
-        nicknames = message[10:].split()
-        userhost_query(nicknames)
-        continue
-    if message.startswith("/wallops "): # solo para operadores
-        wallops_message(message[9:])
-        continue
-    if message.startswith("/whois "):
-        whois_user(message[7:])
-        continue
-    if message.startswith("/whowas "):
-        whowas_user(message[8:])
-        continue
     if message.startswith("/who "):
         who_channel(message[5:])
+        continue
+    if message.startswith("/links"):
+        list_connected_servers()
         continue
     if message.startswith("/nick "):
         change_user()
         continue
     if message.startswith("/stats"):
         stats()
-        continue
-    if message.startswith("/part"):
-        part_channel()
-        continue
-    if message.startswith("/names"):
-        list_names()
-        continue
-    if message.startswith("/users"):
-        list_users(channel)
-        continue
-    if message.startswith("/action "):
-        send_action(message[8:])
-        continue
-    if message.startswith("/topic "):
-        set_topic(message[7:])
         continue
     if message.startswith("/joinChanel"):
         chanel = message.split(" ")[1]
@@ -362,6 +383,74 @@ while True:
     if message.startswith("/quit"):
         quit_irc()
         break
-    send_message(message)
+    if message.startswith("/topic"):
+        parts = message.split(' ')
+        if len(parts) == 2:
+            # Asume que el comando tiene el formato /topic #canal
+            topic(parts[1])
+            continue
+        elif len(parts) > 2:
+            # Extraer el canal y el nuevo tema del mensaje
+            parts = message[7:].split(' ', 1) # Asume que el comando tiene el formato "/topic #canal Nuevo tema del canal"
+            if len(parts) == 2:
+                channel_name, new_topic = parts
+                set_topic(channel_name, new_topic)
+            continue
+        print("Uso incorrecto del comando /topic. Debe ser /topic #canal Nuevo tema del canal")
+        continue
+    
+    if message.startswith("/part"):
+        part_channel()
+        continue
+
+
+    if message.startswith("/server"):
+        # Asume que el comando tiene el formato "/server server_name"
+        server_name = message[8:]
+        connect_to_server(server_name)
+        continue
+    if message.startswith("/removeinviteonly"):
+        # Asume que el comando tiene el formato "/removeinviteonly #channel"
+        channel_name = message[17:]
+        remove_channel_invite_only(channel_name)
+        continue
+    if message.startswith("/inviteonly"):
+        # Asume que el comando tiene el formato "/inviteonly #channel"
+        channel_name = message[12:]
+        make_channel_invite_only(channel_name)
+        continue
+    if message.startswith("/password"):
+        # Asume que el comando tiene el formato "/password #channel contraseña"
+        parts = message[9:].split(' ', 1)
+        if len(parts) == 2:
+            channel_name, password = parts
+            set_channel_password(channel_name, password)
+        else:
+            print("Uso incorrecto del comando /password. Debe ser /password #channel contraseña")
+        continue
+    if message.startswith("/unban"):
+        # Asume que el comando tiene el formato "/unban nickname #channel"
+        parts = message[7:].split(' ')
+        if len(parts) == 2:
+            unban_user(parts[1], parts[0])
+        else:
+            print("Uso incorrecto del comando /unban. Debe ser /unban nickname #channel")
+        continue
+
+    if message.startswith("/userhost "): # el estado de conexión (indicado por el signo más +), el modo de usuario (indicado por el tilde ~), el nombre de usuario real (en este caso, "miUsuario"), y el hostname o dirección IP del usuario (e756-a214-b931-5050-47f1.206.152.ip).
+        nicknames = message[10:].split()
+        userhost_query(nicknames)
+        continue
+    if message.startswith("/wallops "): # solo para operadores
+        wallops_message(message[9:])
+        continue
+    if message.startswith("/users"):
+        list_users(channel)
+        continue
+    if message.startswith("/action "):
+        send_action(message[8:])
+        continue
+    send_channel_message(message)
+    print('----------------------------')
 print("exit")
 irc.close()
