@@ -515,7 +515,7 @@ while True:
 
 
 
-#                       IMPLEMENTADOS PERO NO TESTEADOS
+#                               IMPLEMENTADOS
 # -------------------------------------------------------------------------
 
     if message.startswith("/server"):
