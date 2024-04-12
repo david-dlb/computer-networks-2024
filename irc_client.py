@@ -266,8 +266,7 @@ def userhost_query(nicknames):
 def wallops_message(message):
     irc.send(bytes('WALLOPS :' + message + '\r\n', 'UTF-8'))
 
-def send_action():
-    action = input("action: ")
+def send_action(action):
     irc.send(bytes('PRIVMSG ' + channel + ' :\x01ACTION ' + action + '\x01\r\n', 'UTF-8'))
 
 def connect_to_server(server_name):
@@ -388,10 +387,14 @@ while True:
 # --------------------------------------------------------------------------
 
     if message.startswith("/help"):
-        print("Comandos disponibles:")
+        print(' ')
+        print('--------------------------------------------------')
+        print("            Comandos disponibles:")
+        print('--------------------------------------------------')
         for comando in comandos_ayuda:
             print(f"{comando['comando']}: {comando['descripcion']} Ejemplo: {comando['ejemplo']}")
             print(' ')
+        print(' ')
         continue
 
     if message.startswith("/msgpv"):
@@ -553,10 +556,6 @@ while True:
     
     if message.startswith("/wallops "): # solo para operadores
         wallops_message(message[9:])
-        continue
-    
-    if message.startswith("/users"):
-        list_users(channel)
         continue
     
     if message.startswith("/action "):
